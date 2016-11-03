@@ -45,82 +45,79 @@ func main() {
 
 // Initialize the state of the 'Policies' variable
 func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
-	fmt.Println("Initializing Policies")
+    if len(args) != 1 {
+        return nil, errors.New("Incorrect number of arguments. Expecting 1")
+    }
 
-	// Encode empty array of strings into json
-	//var blank []string
-	blankBytes, _ := json.Marshal(&args[0])//json.Marshal(&blank)
+    err := stub.PutState("hello_world", []byte(args[0]))
+    if err != nil {
+        return nil, err
+    }
 
-	// Set the state of the 'Cows' variable to blank
-	err := stub.PutState("Policies", blankBytes)
-	if err != nil {
-		fmt.Println("Failed to initialize policies")
-		return nil, err
-	}
-
-	fmt.Println("Initialization complete")
-	return nil, nil
+    return nil, nil
 }
 
 func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
-	fmt.Println("Invoking")
+    fmt.Println("invoke is running " + function)
 
-	if function == "init" {
-		return t.Init(stub, "init", args)
-	} else if function == "write" {
-		return t.Write(stub, args)
-	}
+    // Handle different functions
+    if function == "init" {
+        return t.Init(stub, "init", args)
+    } else if function == "write" {
+        return t.write(stub, args)
+    }
+    fmt.Println("invoke did not find func: " + function)
 
-	fmt.Println("Invoke did not find a function: " + function)
-	return nil, errors.New("Received unknown function invocation")
+    return nil, errors.New("Received unknown function invocation")
 }
 
 // Check the state of the chaincode
 func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
-	fmt.Println("Querying: " + function)
+    fmt.Println("query is running " + function)
 
-	if function == "read" {
-		return t.Read(stub, args)
-	}
-	fmt.Println("Query did not find a function: " + function)
-	return nil, errors.New("Received unknown function query")
+    // Handle different functions
+    if function == "read" {                            //read a variable
+        return t.read(stub, args)
+    }
+    fmt.Println("query did not find func: " + function)
+
+    return nil, errors.New("Received unknown function query")
 }
 
 // Write a value to a variable
-func (t *SimpleChaincode) Write(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
-	fmt.Println("Writing")
+func (t *SimpleChaincode) write(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+    var name, value string
+    var err error
+    fmt.Println("running write()")
 
-	var name, value string
-	var err error
+    if len(args) != 2 {
+        return nil, errors.New("Incorrect number of arguments. Expecting 2. name of the variable and value to set")
+    }
 
-	if len(args) != 2 {
-		return nil, errors.New("Expecting two arguments; arguments received: " + strconv.Itoa(len(args)))
-	}
-
-	name = args[0]
-	value = args[1]
-	err = stub.PutState(name, []byte(value))
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
+    name = args[0]                            //rename for fun
+    value = args[1]
+    err = stub.PutState(name, []byte(value))  //write the variable into the chaincode state
+    if err != nil {
+        return nil, err
+    }
+    return nil, nil
 }
 
 // Read the state of a variable
-func (t *SimpleChaincode) Read(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
-	var name, jsonResp string
-	var err error
+func (t *SimpleChaincode) read(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+    var name, jsonResp string
+    var err error
 
-	if len(args) != 1 {
-		return nil, errors.New("Expecting one argument; arguments received: " + strconv.Itoa(len(args)))
-	}
+    if len(args) != 1 {
+        return nil, errors.New("Incorrect number of arguments. Expecting name of the var to query")
+    }
 
-	name = args[0]
-	valAsBytes, err := stub.GetState(name)
-	if err != nil {
-		jsonResp = "{\"Error\": \"Failed to get state for " + name + "\"}"
-		return nil, errors.New(jsonResp)
-	}
+    name = args[0]
+    valAsbytes, err := stub.GetState(name)
+    if err != nil {
+        jsonResp = "{\"Error\":\"Failed to get state for " + name + "\"}"
+        return nil, errors.New(jsonResp)
+    }
 
-	return valAsBytes, nil
+    return valAsbytes, nil
 }
