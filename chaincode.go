@@ -177,7 +177,7 @@ func (t *SimpleChaincode) init_cow(stub *shim.ChaincodeStub, args []string) ([]b
 
 	fmt.Println("- end init cow")
 	return nil, nil
-}''
+}
 
 //========================================================================================================================
 // Check the state of the chaincode
