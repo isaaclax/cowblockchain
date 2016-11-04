@@ -85,15 +85,14 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 		//initialize the chaincode state, used as reset
     if function == "init" {
         return t.Init(stub, "init", args)
+    } else if function == "write" {
+        return t.write(stub, args)
     }
 		//deletes an entity from its state
 		// else if function == "delete" {
 		// 	return t.Delete(stub, args)
 		// }
 		//writes a value to the chaincode state
-		else if function == "write" {
-        return t.write(stub, args)
-    }
 		//create a new cow
 		// else if function == "init_cow" {
 		// 	return t.init_cow(stub, args)
