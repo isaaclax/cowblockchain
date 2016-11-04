@@ -33,8 +33,8 @@ type Policy struct {
 	ID string
 	CowID string
 	OwnerID string
-	Premium int32
-	Value int32
+	Premium int
+	Value int
 }
 
 // =======================================================================================================================
