@@ -13,6 +13,9 @@ import(
 
 type SimpleChaincode struct {}
 
+var cowIndexStr = '_cowindex'
+var policyIndexStr = '_policyindex'
+
 type Cow struct {
 	ID string
 	OwnerID string
