@@ -123,7 +123,7 @@ func (t *SimpleChaincode) registerCow(stub *shim.ChaincodeStub, args []string) (
 		newCow.ID = cowID
 		newCow.OwnerID = ownerID
 		newCow.SensorID = sensorID
-		
+
 }
 
 //========================================================================================================================
@@ -148,6 +148,55 @@ func (t *SimpleChaincode) registerPolicy(stub *shim.ChaincodeStub, args []string
 	newPolicy.Premium = premium
 	newPolicy.Value = value
 
+}
+
+// ============================================================================================================================
+// Init Cow - create a new cow, store into chaincode state
+// ============================================================================================================================
+func (t *SimpleChaincode) init_cow(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+	var err error
+
+	//   0					1
+	// OwnerID		SensorID
+	// "100",			"101"
+	if len(args) != 2 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 3")
+	}
+
+	fmt.Println("- start init cow")
+	if len(args[0]) <= 0 {
+		return nil, errors.New("1st argument must be a non-empty string")
+	}
+	if len(args[1]) <= 0 {
+		return nil, errors.New("2nd argument must be a non-empty string")
+	}
+
+	cowID := uuid.NewV4().String()
+	ownerID := args[0]
+	sensorID := args[1]
+
+	str := `{"cowID": "` + cowID + `", "ownerID": "` + ownerID + `", "sensorID": ` + sensorID) + `"}`
+	err = stub.PutState(args[0], []byte(str))								//store cow with id as key
+	if err != nil {
+		return nil, err
+	}
+
+	//get the marble index
+	marblesAsBytes, err := stub.GetState(cowIndexStr)
+	if err != nil {
+		return nil, errors.New("Failed to get cow index")
+	}
+	var cowIndex []string
+	json.Unmarshal(cowAsBytes, &cowIndex)							//un stringify it aka JSON.parse()
+
+	//append
+	cowIndex = append(cowIndex, args[0])								//add cow name to index list
+	fmt.Println("! cow index: ", cowIndex)
+	jsonAsBytes, _ := json.Marshal(cowIndex)
+	err = stub.PutState(cowIndexStr, jsonAsBytes)						//store name of cow
+
+	fmt.Println("- end init cow")
+	return nil, nil
 }
 
 //========================================================================================================================
