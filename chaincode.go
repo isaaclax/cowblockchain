@@ -13,9 +13,6 @@ import(
 
 type SimpleChaincode struct {}
 
-var cowIndexStr = '_cowindex'
-var policyIndexStr = '_policyindex'
-
 type Cow struct {
 	ID string
 	OwnerID string
@@ -39,6 +36,11 @@ type Policy struct {
 	Premium string
 	Value string
 }
+
+//name for the key/value that will store a list of all known cows
+var cowIndexStr = '_cowindex'
+//name for the key/value that will store a list of all known policies
+var policyIndexStr = '_policyindex'
 
 // =======================================================================================================================
 // Make Timestamp - create a timestamp in ms
