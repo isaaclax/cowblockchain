@@ -33,8 +33,8 @@ type Policy struct {
 	ID string
 	CowID string
 	OwnerID string
-	Premium int
-	Value int
+	Premium string
+	Value string
 }
 
 // =======================================================================================================================
@@ -120,14 +120,8 @@ func (t *SimpleChaincode) init_policy(stub *shim.ChaincodeStub, args []string) (
 	policyID := uuid.NewV4().String()
 	cowID := args[0]
 	ownerID := args[1]
-	premium, err :=  strconv.Atoi(args[2])
-	if err != nil {
-		return nil, err
-	}
-	value, err := strconv.Atoi(args[3])
-	if err != nil {
-		return nil, err
-	}
+	premium :=  args[2]
+	value := args[3]
 
 	str := "{policyID: " + policyID + ", cowID: " + cowID + ", ownerID: " + ownerID + ", premium: " + premium + ", value: " + value + "}"
 	err = stub.PutState(policyID, []byte(str))								//store policy with id as key
