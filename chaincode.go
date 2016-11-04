@@ -155,7 +155,7 @@ func (t *SimpleChaincode) init_cow(stub *shim.ChaincodeStub, args []string) ([]b
 	ownerID := args[0]
 	sensorID := args[1]
 
-	str := '{"cowID: "' + cowID + '", "ownerID: "' + ownerID + '", "sensorID": "' + sensorID +'"}'
+	str := '{cowID: ' + cowID + ', ownerID: ' + ownerID + ', sensorID: ' + sensorID + '}'
 	err = stub.PutState(args[0], []byte(str))								//store cow with id as key
 	if err != nil {
 		return nil, err
