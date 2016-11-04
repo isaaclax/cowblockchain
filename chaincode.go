@@ -123,11 +123,7 @@ func (t *SimpleChaincode) registerCow(stub *shim.ChaincodeStub, args []string) (
 		newCow.ID = cowID
 		newCow.OwnerID = ownerID
 		newCow.SensorID = sensorID
-
-		if err != nil {
-        return nil, err
-    }
-    return nil, nil
+		
 }
 
 //========================================================================================================================
@@ -151,11 +147,6 @@ func (t *SimpleChaincode) registerPolicy(stub *shim.ChaincodeStub, args []string
 	newPolicy.OwnerID = ownerID
 	newPolicy.Premium = premium
 	newPolicy.Value = value
-
-	if err != nil {
-			return nil, err
-	}
-	return nil, nil
 
 }
 
