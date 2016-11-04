@@ -185,7 +185,7 @@ func (t *SimpleChaincode) init_cow(stub *shim.ChaincodeStub, args []string) ([]b
 	}
 
 	//get the cow index
-	cowsAsBytes, err := stub.GetState(cowIndexStr)
+	cowAsBytes, err := stub.GetState(cowIndexStr)
 	if err != nil {
 		return nil, errors.New("Failed to get cow index")
 	}
