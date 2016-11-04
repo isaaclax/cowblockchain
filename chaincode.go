@@ -31,8 +31,8 @@ type Sensor struct {
 
 type Policy struct {
 	ID string
-	CowID []Cow
-	OwnerID []Owner
+	CowID string
+	OwnerID string
 	Premium int32
 	Value int32
 }
