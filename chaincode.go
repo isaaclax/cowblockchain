@@ -14,27 +14,27 @@ import(
 type SimpleChaincode struct {}
 
 type Cow struct {
-	ID string 'json:"id"'
-	OwnerID string 'json:"ownerID"'
-	SensorID string 'json:"sensorID"'
+	ID string
+	OwnerID string
+	SensorID string
 }
 
 type Owner struct {
-	CowsOwned []Cow 'json:"cow"'
-	Policies []Policy 'json:"policies"'
+	CowsOwned []Cow
+	Policies []Policy
 }
 
 type Sensor struct {
-	ID string 'json:"id"'
-	CowID string 'json:"cowID"'
+	ID string
+	CowID string
 }
 
 type Policy struct {
-	ID string 'json:"id"'
-	CowID []Cow 'json:"cowID"'
-	OwnerID []Owner 'json:"ownerID"'
-	Premium int32 'json:"premium"'
-	Value int32 'json:"value"'
+	ID string
+	CowID []Cow
+	OwnerID []Owner
+	Premium int32
+	Value int32
 }
 
 // =======================================================================================================================
