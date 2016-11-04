@@ -92,20 +92,12 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
         return t.Init(stub, "init", args)
     } else if function == "write" {
         return t.write(stub, args)
-    }
-		//deletes an entity from its state
-		// else if function == "delete" {
-		// 	return t.Delete(stub, args)
-		// }
-		//writes a value to the chaincode state
-		//create a new cow
-		// else if function == "init_cow" {
-		// 	return t.init_cow(stub, args)
-		// }
-		//change owner of a cow
-		// else if function == "set_user" {
-		// 	return t.set_user(stub, args)
-		// }
+    } else if function == "init_cow" {
+			return t.init_cow(stub, args)
+		} else if function == "init_policy" {
+			return t.init_policy(stub,args)
+		}
+
     fmt.Println("invoke did not find func: " + function)
 
     return nil, errors.New("Received unknown function invocation")
