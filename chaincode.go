@@ -38,9 +38,9 @@ type Policy struct {
 }
 
 //name for the key/value that will store a list of all known cows
-var cowIndexStr = '_cowindex'
+var cowIndexStr = "_cowindex"
 //name for the key/value that will store a list of all known policies
-var policyIndexStr = '_policyindex'
+var policyIndexStr = "_policyindex"
 
 // =======================================================================================================================
 // Make Timestamp - create a timestamp in ms
