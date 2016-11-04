@@ -118,8 +118,14 @@ func (t *SimpleChaincode) registerPolicy(stub *shim.ChaincodeStub, args []string
 	policyID := uuid.NewV4().String()
 	cowID := args[0]
 	ownerID := args[1]
-	premium :=  strconv.Atoi(args[2])
-	value := strconv.Atoi(args[3])
+	premium, err :=  strconv.Atoi(args[2])
+	if err != nil {
+		return nil, err
+	}
+	value, err := strconv.Atoi(args[3])
+	if err != nil {
+		return nil, err
+	}
 
 	var newPolicy Policy
 	newPolicy.ID = policyID
