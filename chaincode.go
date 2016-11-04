@@ -1,12 +1,12 @@
 package main
 
 import(
-// "encoding/json"
+	"encoding/json"
 	"errors"
 	"fmt"
-// "strconv"
+	"strconv"
 	"time"
-//	"string"
+	"string"
 	"github.com/satori/go.uuid"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
