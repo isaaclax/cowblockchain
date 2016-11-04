@@ -107,26 +107,6 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 }
 
 //========================================================================================================================
-// Registers a cow to the blockchain
-//========================================================================================================================
-
-func (t *SimpleChaincode) registerCow(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
-		if len(args) < 2 {
-			return nil, errors.New("Incorrect number of arguments. Expecting 2. ID of the owner and the ID of the sensor")
-		}
-
-		cowID := uuid.NewV4().String()
-		ownerID := args[0]
-		sensorID := args[1]
-
-		var newCow Cow
-		newCow.ID = cowID
-		newCow.OwnerID = ownerID
-		newCow.SensorID = sensorID
-
-}
-
-//========================================================================================================================
 // Registers a policy to the blockchain
 //========================================================================================================================
 
@@ -197,7 +177,7 @@ func (t *SimpleChaincode) init_cow(stub *shim.ChaincodeStub, args []string) ([]b
 
 	fmt.Println("- end init cow")
 	return nil, nil
-}
+}''
 
 //========================================================================================================================
 // Check the state of the chaincode
