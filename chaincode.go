@@ -129,7 +129,7 @@ func (t *SimpleChaincode) init_policy(stub *shim.ChaincodeStub, args []string) (
 		return nil, err
 	}
 
-	str := "{policyID: " + policyID + "cowID: " + cowID + ", ownerID: " + ownerID + ", premium: " + premium + ", value: " + value + "}"
+	str := "{policyID: " + policyID + ", cowID: " + cowID + ", ownerID: " + ownerID + ", premium: " + premium + ", value: " + value + "}"
 	err = stub.PutState(policyID, []byte(str))								//store policy with id as key
 	if err != nil {
 		return nil, err
