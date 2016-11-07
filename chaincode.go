@@ -94,9 +94,10 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
         return t.write(stub, args)
     } else if function == "init_cow" {
 			return t.init_cow(stub, args)
-		} else if function == "init_policy" {
-			return t.init_policy(stub,args)
 		}
+		// else if function == "init_policy" {
+		// 	return t.init_policy(stub,args)
+		// }
 
     fmt.Println("invoke did not find func: " + function)
 
@@ -107,43 +108,43 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 // Registers a policy to the blockchain
 //========================================================================================================================
 
-func (t *SimpleChaincode) init_policy(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
-	var err error
-
-	if len(args) < 4 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 4. ID of the cow, ID of the owner, the premium, and the value of the policy")
-	}
-
-	policyID := uuid.NewV4().String()
-	cowID := args[0]
-	ownerID := args[1]
-	premium :=  args[2]
-	value := args[3]
-
-	str := "{policyID: " + policyID + ", cowID: " + cowID + ", ownerID: " + ownerID + ", premium: " + premium + ", value: " + value + "}"
-	err = stub.PutState(policyID, []byte(str))								//store policy with id as key
-	if err != nil {
-		return nil, err
-	}
-
-	//get the policy index
-	policyAsBytes, err := stub.GetState(policyIndexStr)
-	if err != nil {
-		return nil, errors.New("Failed to get policy index")
-	}
-	var policyIndex []string
-	json.Unmarshal(policyAsBytes, &policyIndex)							//un stringify it aka JSON.parse()
-
-	//append
-	policyIndex = append(policyIndex, args[0])								//add policy name to index list
-	fmt.Println("! policy index: ", policyIndex)
-	jsonAsBytes, _ := json.Marshal(policyIndex)
-	err = stub.PutState(policyIndexStr, jsonAsBytes)						//store name of cow
-
-	fmt.Println("- end init policy")
-	return nil, nil
-
-}
+// func (t *SimpleChaincode) init_policy(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+// 	var err error
+//
+// 	if len(args) < 4 {
+// 		return nil, errors.New("Incorrect number of arguments. Expecting 4. ID of the cow, ID of the owner, the premium, and the value of the policy")
+// 	}
+//
+// 	policyID := uuid.NewV4().String()
+// 	cowID := args[0]
+// 	ownerID := args[1]
+// 	premium :=  args[2]
+// 	value := args[3]
+//
+// 	str := "{policyID: " + policyID + ", cowID: " + cowID + ", ownerID: " + ownerID + ", premium: " + premium + ", value: " + value + "}"
+// 	err = stub.PutState(policyID, []byte(str))								//store policy with id as key
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	//get the policy index
+// 	policyAsBytes, err := stub.GetState(policyIndexStr)
+// 	if err != nil {
+// 		return nil, errors.New("Failed to get policy index")
+// 	}
+// 	var policyIndex []string
+// 	json.Unmarshal(policyAsBytes, &policyIndex)							//un stringify it aka JSON.parse()
+//
+// 	//append
+// 	policyIndex = append(policyIndex, args[0])								//add policy name to index list
+// 	fmt.Println("! policy index: ", policyIndex)
+// 	jsonAsBytes, _ := json.Marshal(policyIndex)
+// 	err = stub.PutState(policyIndexStr, jsonAsBytes)						//store name of cow
+//
+// 	fmt.Println("- end init policy")
+// 	return nil, nil
+//
+// }
 
 // ============================================================================================================================
 // Init Cow - create a new cow, store into chaincode state
@@ -223,7 +224,7 @@ func (t *SimpleChaincode) write(stub *shim.ChaincodeStub, args []string) ([]byte
         return nil, errors.New("Incorrect number of arguments. Expecting 2. name of the variable and value to set")
     }
 
-    name = args[0]                            //rename for fun
+    name = args[0]
     value = args[1]
     err = stub.PutState(name, []byte(value))  //write the variable into the chaincode state
     if err != nil {
