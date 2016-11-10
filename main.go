@@ -34,6 +34,10 @@ type AllPolicies struct {
 	Catalog []Policy 'json:"policies"'
 }
 
+var activePoliciesString = "_activePolicies"
+var activeCowsString = "_activeCows"
+var activeOwnersString = "_activeOwners"
+
 //==============================================================================
 //==============================================================================
 
@@ -69,13 +73,33 @@ func makeHash(args []string) string {
 func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	fmt.Println("Method: SimpleChaincode.Init")
 
-	// Initialize the catalogs for active policies
-	activeCatalog := make([]Policy, 0)
+	// Initialize the catalogs for both pending and active policies
+	ownerCatalog := make([]Owner, 0)
+	cowCatalog := make([]Cow, 0)
+	policyCatalog := make([]Policy, 0)
 
 	//Create and marshal the active policies
 	var activePolicies AllPolicies
-	activePolicies.Catalog = activeCatalog
-	activeAsBytes, err := json.Marshal(activePolicies)
+	activePolicies.Catalog = policyCatalog
+	policiesAsBytes, err := json.Marshal(activePolicies)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create and marshal the pending policies
+	var activeCows AllCows
+	activeCows.Catalog = cowCatalog
+	var pendingAsBytes []byte
+	cowsAsBytes, err = json.Marshal(activeCows)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create and marshal incomplete policies
+	var activeOwners AllOwners
+	activeOwners.Catalog = ownerCatalog
+	var incompleteAsBytes []byte
+	ownersAsBytes, err = json.Marshal(activeOwners)
 	if err != nil {
 		return nil, err
 	}
@@ -86,8 +110,16 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 		return nil, err
 	}
 
-	fmt.Println("Initialization complete")
-	return nil, nil
+	err = stub.PutState(activeCowsString, cowsAsBytes)
+	if err != nil {
+		fmt.Println("Failed to initialize active cows")
+		return nil, err
+	}
+
+	err = stub.PutState(activeOwnersString, ownersAsBytes)
+	if err != nil {
+		fmt.Println("Failed to initialize active owners")
+		return nil, err
 }
 
 //==============================================================================
@@ -104,6 +136,24 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 
 	fmt.Println("Invoke did not find a function: " + function)
 	return nil, errors.New("Received unknown function invocation")
+}
+
+//==============================================================================
+//==============================================================================
+
+func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+	fmt.Println("Method: SimpleChaincode.Query; received: " + function)
+
+	if function == "getActivePolicies" {
+		return getPolicies(stub, activePoliciesString)
+	} else if function == "getActiveCows" {
+		return getCows(stub, activeCowsString)
+	} else if function == "getActiveOwners" {
+		return getOwners(stub, activeOwnersString)
+	}
+
+	fmt.Println("Query did not find a function: " + function)
+	return nil, errors.New("Received unknown function query")
 }
 
 //==============================================================================
@@ -138,6 +188,18 @@ func getCows(stub *shim.ChaincodeStub, cowsString string) ([]byte, error) {
 
 //==============================================================================
 //==============================================================================
+
+func getPolicies(stub *shim.ChaincodeStub, policiesString string) ([]byte, error) {
+	fmt.Println("Function: getPolicies (" + policiesString + ")")
+
+	policiesAsBytes, err := stub.GetState(policiesString)
+	if err != nil {
+		jsonResp := "{\"Error\": \"Failed to get policies.\"}"
+		return nil, errors.New(jsonResp)
+	}
+
+	return policiesAsBytes, nil
+}
 
 func (t *SimpleChaincode) registerOwner(stub *shim.ChaincodeStub, args []string) ([]byte, error){
 	//TODO(isaac) assign the owner a unique ID #
@@ -321,6 +383,27 @@ func generatePolicy(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
 	//TODO(isaac) add the new policy to the list of current policies
 	// add the policy to the owner
+	policiesAsBytes, err := getPolicies(stub, incompletePoliciesString)
+	if err != nil {
+		return nil, err
+	}
+
+	var incompletePolicies AllPolicies
+	incompletePolicies, err = bytesToAllPolicies(incompleteAsBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add the new policy to the list of pending policies
+	incompletePolicies.Catalog = append(incompletePolicies.Catalog, newPolicy)
+	fmt.Println("New policy appended to incomplete policies. Incomplete policy count: " + strconv.Itoa(len(incompletePolicies.Catalog)))
+
+	err = writePolicies(stub, incompletePoliciesString, incompletePolicies)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("incomplete policies successfully rewritten with new policy")
+	return nil, nil
 
 }
 
