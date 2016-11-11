@@ -201,6 +201,9 @@ func getPolicies(stub *shim.ChaincodeStub, policiesString string) ([]byte, error
 	return policiesAsBytes, nil
 }
 
+//==============================================================================
+//==============================================================================
+
 func (t *SimpleChaincode) registerOwner(stub *shim.ChaincodeStub, args []string) ([]byte, error){
 	//TODO(isaac) assign the owner a unique ID #
 	//TODO(isaac) make an owner object with this ID #
