@@ -24,7 +24,6 @@ type Cow struct {
 
 type Policy struct {
 	PolicyID string `json:"policyID"`
-	Cow []Cow `json:"cow"`
 	Premium int `json:"premium"`
 	Value int `json:"value"`
 }
@@ -364,7 +363,7 @@ func bytesToAllCows(cowsAsBytes []byte) (AllCows, error) {
 //==============================================================================
 //==============================================================================
 
-func createPolicyObject(ID string, cows []Cow) Policy {
+func createPolicyObject(ID string) Policy {
 	fmt.Println("Function: createPolicyObject")
 
 	//TODO(isaac) I need to enter the cow object, the premium, and the value to the policy object
@@ -372,7 +371,6 @@ func createPolicyObject(ID string, cows []Cow) Policy {
 	var policy Policy
 
 	policy.PolicyID = ID
-	policy.Cow = cows
 	policy.Premium = 100
 	policy.Value = 5000
 
@@ -393,8 +391,7 @@ func generatePolicy(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	// check to make sure that cow doesn't already have a policy associated to it
 	//TODO(isaac) check to see if the cow has been registered
 
-	//TODO(isaac) once everything has been verified as registered, make the policy object
-	newPolicy := createPolicyObject(args)
+	newPolicy := createPolicyObject(args[0])
 
 	//TODO(isaac) add the new policy to the list of current policies
 	// add the policy to the owner
@@ -403,21 +400,21 @@ func generatePolicy(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 		return nil, err
 	}
 
-	var incompletePolicies AllPolicies
-	incompletePolicies, err = bytesToAllPolicies(incompleteAsBytes)
+	var policies AllPolicies
+	policies, err = bytesToAllPolicies(policiesAsBytes)
 	if err != nil {
 		return nil, err
 	}
 
 	// Add the new policy to the list of pending policies
-	incompletePolicies.Catalog = append(incompletePolicies.Catalog, newPolicy)
-	fmt.Println("New policy appended to incomplete policies. Incomplete policy count: " + strconv.Itoa(len(incompletePolicies.Catalog)))
+	policies.Catalog = append(policies.Catalog, newPolicy)
+	fmt.Println("New policy appended to policies. Incomplete policy count: " + strconv.Itoa(len(policies.Catalog)))
 
-	err = writePolicies(stub, incompletePoliciesString, incompletePolicies)
+	err = writePolicies(stub, activePoliciesString, policies)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("incomplete policies successfully rewritten with new policy")
+	fmt.Println("policies successfully rewritten with new policy")
 	return nil, nil
 
 }
