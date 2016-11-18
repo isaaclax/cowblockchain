@@ -61,7 +61,7 @@ func main() {
 
 func makeHash(args []string) string {
 	if len(args) < 0 {
-		return "no_hash_can_be_generated"
+		return "cannot generate hash"
 	}
 
 	i := 0
@@ -142,6 +142,8 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 		return t.Init(stub, "init", args)
 	} else if function == "generatePolicy" {
 		return generatePolicy(stub, args)
+	} else if function == "cowDeath" {
+		return cowDeath(stub, args)
 	}
 
 	fmt.Println("Invoke did not find a function: " + function)
@@ -155,15 +157,30 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 	fmt.Println("Method: SimpleChaincode.Query; received: " + function)
 
 	if function == "getActivePolicies" {
-		return getPolicies(stub, activePoliciesString)
+		return getAll(stub, activePoliciesString)
 	} else if function == "getActiveCows" {
-		return getCows(stub, activeCowsString)
+		return getAll(stub, activeCowsString)
 	} else if function == "getActiveOwners" {
-		return getOwners(stub, activeOwnersString)
+		return getAll(stub, activeOwnersString)
+	} else if function == "getPolicyOwner" {
+		return getPolicyOwner(stub, getPolicyOwner)
 	}
 
 	fmt.Println("Query did not find a function: " + function)
 	return nil, errors.New("Received unknown function query")
+}
+
+//==============================================================================
+//==============================================================================
+
+func write(stub *shim.ChaincodeStub, name string, value []byte) error {
+	fmt.Println("Function: write")
+
+	err := stub.PutState(name, value)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 //==============================================================================
@@ -184,10 +201,10 @@ func getOwners(stub *shim.ChaincodeStub, ownersString string) ([]byte, error) {
 //==============================================================================
 //==============================================================================
 
-func getCows(stub *shim.ChaincodeStub, cowsString string) ([]byte, error) {
-	fmt.Println("Function: getCows (" + cowsString + ")")
+func getCows(stub *shim.ChaincodeStub) ([]byte, error) {
+	fmt.Println("Function: getCows (" + activeCowsString + ")")
 
-	cowsAsBytes, err := stub.GetState(cowsString)
+	cowsAsBytes, err := stub.GetState(activeCowsString)
 	if err != nil {
 		jsonResp := "{\"Error\": \"Failed to get cows.\"}"
 		return nil, errors.New(jsonResp)
@@ -214,6 +231,99 @@ func getPolicies(stub *shim.ChaincodeStub, policiesString string) ([]byte, error
 //==============================================================================
 //==============================================================================
 
+func getAll(stub *shim.ChaincodeStub, objectString string) ([]byte, error) {
+	fmt.Println("Function: getAll (" + objectString + ")")
+
+	objectsAsBytes, err := stub.GetState(objectString)
+	if err != nil {
+		jsonResp := "{\"Error\": \"Failed to get objects.\"}"
+		return nil, errors.New(jsonResp)
+	}
+
+	return objectsAsBytes, nil
+}
+
+//==============================================================================
+//==============================================================================
+
+func getPolicyOwner(cows []Cow, policyID string) (int, error) {
+	fmt.Println("Function: getPolicyOwner")
+
+	var i int
+	i = 0
+	for i < len(cows) {
+		if cows[i].SensorID == policyID {
+			return cows[i].OwnerID, nil
+		}
+		i = i + 1
+	}
+
+	return 0, errors.New("No policy found with this policy ID: " + policyID)
+}
+
+//==============================================================================
+//==============================================================================
+
+func writePolicies(stub *shim.ChaincodeStub, policiesString string, policies AllPolicies) error {
+	fmt.Println("Function: writePolicies")
+
+	policiesAsBytes, err := json.Marshal(policies)
+	if err != nil {
+		return err
+	}
+	fmt.Println("policies have been converted to bytes")
+
+	err = write(stub, policiesString, policiesAsBytes)
+	if err != nil {
+		return err
+	}
+	fmt.Println("policies written")
+	return nil
+}
+
+//==============================================================================
+//==============================================================================
+
+func writeOwners(stub *shim.ChaincodeStub, ownersString string, owners AllOwners) error {
+	fmt.Println("Function: writeOwners")
+
+	ownersAsBytes, err := json.Marshal(owners)
+	if err != nil {
+		return err
+	}
+	fmt.Println("owners have been converted to bytes")
+
+	err = write(stub, ownersString, ownersAsBytes)
+	if err != nil {
+		return err
+	}
+	fmt.Println("owners written")
+	return nil
+}
+
+//==============================================================================
+//==============================================================================
+
+func writeCows(stub *shim.ChaincodeStub, cows AllCows) error {
+	fmt.Println("Function: writeCows")
+
+	cowsAsBytes, err := json.Marshal(cows)
+	if err != nil {
+		return err
+	}
+	fmt.Println("cows have been converted to bytes")
+
+	err = write(stub, activeCowsString, cowsAsBytes)
+	if err != nil {
+		return err
+	}
+	fmt.Println("cows written")
+	return nil
+}
+
+//==============================================================================
+//==============================================================================
+
 func (t *SimpleChaincode) registerOwner(stub *shim.ChaincodeStub, args []string) ([]byte, error){
 	//TODO(isaac) assign the owner a unique ID #
 	//TODO(isaac) make an owner object with this ID #
@@ -223,48 +333,6 @@ func (t *SimpleChaincode) registerOwner(stub *shim.ChaincodeStub, args []string)
 
 	var owner Owner
 	owner.OwnerID = makeHash(args)
-	return nil, nil
-}
-
-//==============================================================================
-//==============================================================================
-
-func (t *SimpleChaincode) registerCow(stub *shim.ChaincodeStub, ownerID string, sensorID string) ([]byte, error) {
-
-	if ownerID == "" || sensorID == "" {
-		return nil, errors.New("Incorrect number of arguments. Expecting 2 (OwnerID & SensorID)")
-	}
-
-	//TODO(isaac) assign the cow a unique ID #
-	//sensor ID should be argument, can be unique ID #
-
-	//ownerID := args[0]					// owner ID # should be passed as an argument
-	//sensorID := args[1]				// the sensor ID # should be passed as an argument and will be assigned to the cow as it's unique ID #
-
-	//TODO(isaac) check to see if the SensorID has already been registered
-	// if it has, reject the attempt
-
-	//TODO(isaac) use the CowID, OwnerID, and SensorID to make a cow object
-	// convert the cow object to JSON?
-	var cow Cow
-	cow.OwnerID = ownerID
-	cow.SensorID = sensorID
-
-	//TODO(isaac) pull the entire list of cows from the blockchain
-	cowsAsBytes, err := getCows(stub, activeCowsString)
-	if err != nil {
-		return nil, err
-	}
-	// convert it to list of cows (marshal or unmarshal?)
-	//TODO(isaac) add the cow to a list of the cows that are currently covered by policies
-	// convert the whole list (marshal)
-
-	//TODO(isaac) add the list of cows to the blockchain
-
-	err = stub.PutState(cow.SensorID, cowsAsBytes)					//store cow with id as key
-	if err != nil {
-		return nil, err
-	}
 	return nil, nil
 }
 
@@ -328,6 +396,21 @@ func addCow(stub *shim.ChaincodeStub, cow Cow) error {
 	}
 	fmt.Println("list of cows successfully rewritten with new cow")
 	return nil
+}
+
+//==============================================================================
+//==============================================================================
+
+func bytesToAllPolicies(policiesAsBytes []byte) (AllPolicies, error) {
+	fmt.Println("Function: bytesToAllPolicies")
+
+	var policies AllPolicies
+
+	err := json.Unmarshal(policiesAsBytes, &policies)
+	fmt.Println("json.Unmarshal error:")
+	fmt.Println(err)
+
+	return policies, err
 }
 
 //==============================================================================
@@ -422,39 +505,102 @@ func generatePolicy(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 //==============================================================================
 //==============================================================================
 
-// func newOwner(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
-// 	//TODO(isaac) should take new onwer's ID # and cow's ID # as arguments
-//
-// 	//TODO(isaac) should first check to see if owner has registered
-// 	//TODO(isaac) then it should check to see if the cow is registered in the system and is attached to a policy
-//
-// 	//TODO(isaac) replace current ownerID in the policy with the new owners ID #
-//
-// }
+func getCowIndexBySensor(cows []Cow, sensorID string) (int, error) {
+	fmt.Println("Function: getCowBySensor")
 
-//==============================================================================
-//==============================================================================
+	var i int
+	i = 0
+	for i < len(cows) {
+		if cows[i].SensorID == sensorID {
+			return i, nil
+		}
+		i = i + 1
+	}
 
-func payOut(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
-	//TODO(isaac) for now - should take the sensorID as the argument
-
-	//TODO(isaac) find what cow is associated with the sensorID
-	//TODO(isaac) verify that the cowID is part of the list of current cows
-	//TODO(isaac) check to see what policy is associated with that cowID
-	//TODO(isaac) payout the value of the policy
-
-	//TODO(isaac) delete the policy from the list of current policies
-
-	//
-	return nil
+	return 0, errors.New("No cow found with this sensor ID: " + sensorID)
 }
 
-func write(stub *shim.ChaincodeStub, name string, value []byte) error {
-	fmt.Println("Function: write")
+//==============================================================================
+//==============================================================================
 
-	err := stub.PutState(name, value)
+func getPolicyIndexByID(policies []Policy, sensorID string) (int, error) {
+	fmt.Println("Function: getCowBySensor")
+
+	var i int
+	i = 0
+	for i < len(cows) {
+		if cows[i].SensorID == sensorID {
+			return i, nil
+		}
+		i = i + 1
+	}
+
+	return 0, errors.New("No cow found with this sensor ID: " + sensorID)
+}
+
+//==============================================================================
+//==============================================================================
+
+func sensorTriggered(sensorID) (int, error) {
+	fmt.Println("Function: sensorTriggered")
+
+	var cows AllCows
+
+	cowsAsBytes, err := getCows()
+	cows, err = bytesToAllCows(cowsAsBytes)
+	cowDies, err := cowDeath(cows.Catalog, sensorID)
+
+	//TODO getstate of active cow string
+	// I will get it in bytes form
+
+	return cowDies
+}
+
+//==============================================================================
+//==============================================================================
+
+func cowDeath(cows []Cow, sensorID int) error {
+	//TODO needs to call pay out
+
+	fmt.Println("Function: cowDeath")
+	index, err := getCowIndexBySensor(sensorID)
 	if err != nil {
 		return err
 	}
+
+	var policies AllPolicies
+	policiesAsBytes, err := getPolicies()
+	policies, err = bytesToAllPolicies(policiesAsBytes)
+	if err != nil {
+		return err
+	}
+
+	payOut, err := payOut(policies, sensorID)
+	if err != nil {
+		return err
+	}
+
+	copy(cows.Catalog[:index], cows.Catalog[index + 1:])
+	cows.Catalog = cows.Catalog[:len(cows.Catalog) - 1]
+
+	writeCows(cows)
+
 	return nil
+}
+
+//==============================================================================
+//==============================================================================
+
+func payOut(policies []Policy, policyID string) (int, error) {
+
+	var i int
+	i = 0
+	for i < len(policies) {
+		if policies[i].policyID == policyID {
+			return policies[i].Value, nil
+		}
+		i = i + 1
+	}
+
+	return 0, errors.New("No policy found with this policy ID: " + policyID)
 }
