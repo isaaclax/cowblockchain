@@ -143,7 +143,7 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 	} else if function == "generatePolicy" {
 		return generatePolicy(stub, args)
 	} else if function == "cowDeath" {
-		return cowDeath(stub, args)
+		return nil, cowDeath(stub, args)
 	}
 
 	fmt.Println("Invoke did not find a function: " + function)
@@ -162,9 +162,10 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 		return getAll(stub, activeCowsString)
 	} else if function == "getActiveOwners" {
 		return getAll(stub, activeOwnersString)
-	} else if function == "getPolicyOwner" {
-		return getPolicyOwner(stub, getPolicyOwner)
 	}
+	// else if function == "getPolicyOwner" {
+	// 	return getPolicyOwner(stub, args)
+	// }
 
 	fmt.Println("Query did not find a function: " + function)
 	return nil, errors.New("Received unknown function query")
@@ -246,20 +247,24 @@ func getAll(stub *shim.ChaincodeStub, objectString string) ([]byte, error) {
 //==============================================================================
 //==============================================================================
 
-func getPolicyOwner(cows []Cow, policyID string) (int, error) {
-	fmt.Println("Function: getPolicyOwner")
-
-	var i int
-	i = 0
-	for i < len(cows) {
-		if cows[i].SensorID == policyID {
-			return cows[i].OwnerID, nil
-		}
-		i = i + 1
-	}
-
-	return 0, errors.New("No policy found with this policy ID: " + policyID)
-}
+// func getPolicyOwner(stub *shim.ChaincodeStub, args []string) (int, error) {
+// 	fmt.Println("Function: getPolicyOwner")
+//
+// 	policyID := args[0]
+//
+// 	cows := getCows(stub)
+//
+// 	var i int
+// 	i = 0
+// 	for i < len(cows) {
+// 		if cows[i].SensorID == policyID {
+// 			return cows[i].OwnerID, nil
+// 		}
+// 		i = i + 1
+// 	}
+//
+// 	return nil, errors.New("No policy found with this policy ID: " + policyID)
+// }
 
 //==============================================================================
 //==============================================================================
@@ -349,7 +354,7 @@ func addOwner(stub *shim.ChaincodeStub, owner Owner) error {
 	fmt.Println("all owners retrieved")
 
 	var listOfOwners AllOwners
-	listOfOwners, err = bytesToAllOwners(listOfOwners)
+	listOfOwners, err = bytesToAllOwners(ownersAsBytes)
 	if err != nil {
 		return err
 	}
@@ -373,7 +378,7 @@ func addOwner(stub *shim.ChaincodeStub, owner Owner) error {
 func addCow(stub *shim.ChaincodeStub, cow Cow) error {
 	fmt.Println("Function: addCow")
 
-	cowsAsBytes, err := getCows(stub, activeCowsString)
+	cowsAsBytes, err := getCows(stub)
 	if err != nil {
 		return err
 	}
@@ -541,7 +546,7 @@ func getPolicyIndexByID(policies []Policy, sensorID string) (int, error) {
 //==============================================================================
 //==============================================================================
 
-func sensorTriggered(sensorID) (int, error) {
+func sensorTriggered(sensorID string) (int, error) {
 	fmt.Println("Function: sensorTriggered")
 
 	var cows AllCows
@@ -559,9 +564,10 @@ func sensorTriggered(sensorID) (int, error) {
 //==============================================================================
 //==============================================================================
 
-func cowDeath(cows []Cow, sensorID int) error {
+func cowDeath(stub *shim.ChaincodeStub, args []string) error {
 	//TODO needs to call pay out
 
+	sensorID := args[0]
 	fmt.Println("Function: cowDeath")
 	index, err := getCowIndexBySensor(sensorID)
 	if err != nil {
