@@ -23,7 +23,7 @@ type Cow struct {
 }
 
 type Policy struct {
-	PolicyID string `json:"policyID"`
+	SensorID string `json:"sensorID"`
 	Premium int `json:"premium"`
 	Value int `json:"value"`
 }
@@ -142,8 +142,8 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 		return t.Init(stub, "init", args)
 	} else if function == "generatePolicy" {
 		return generatePolicy(stub, args)
-	} else if function == "cowDeath" {
-		return nil, cowDeath(stub, args)
+	} else if function == "sensorTriggered" {
+		return nil, sensorTriggered(stub, args)
 	}
 
 	fmt.Println("Invoke did not find a function: " + function)
@@ -187,47 +187,47 @@ func write(stub *shim.ChaincodeStub, name string, value []byte) error {
 //==============================================================================
 //==============================================================================
 
-func getOwners(stub *shim.ChaincodeStub, ownersString string) ([]byte, error) {
-	fmt.Println("Function: getOwners (" + ownersString + ")")
-
-	ownersAsBytes, err := stub.GetState(ownersString)
-	if err != nil {
-		jsonResp := "{\"Error\": \"Failed to get owners.\"}"
-		return nil, errors.New(jsonResp)
-	}
-
-	return ownersAsBytes, nil
-}
-
-//==============================================================================
-//==============================================================================
-
-func getCows(stub *shim.ChaincodeStub) ([]byte, error) {
-	fmt.Println("Function: getCows (" + activeCowsString + ")")
-
-	cowsAsBytes, err := stub.GetState(activeCowsString)
-	if err != nil {
-		jsonResp := "{\"Error\": \"Failed to get cows.\"}"
-		return nil, errors.New(jsonResp)
-	}
-
-	return cowsAsBytes, nil
-}
-
-//==============================================================================
-//==============================================================================
-
-func getPolicies(stub *shim.ChaincodeStub, policiesString string) ([]byte, error) {
-	fmt.Println("Function: getPolicies (" + policiesString + ")")
-
-	policiesAsBytes, err := stub.GetState(policiesString)
-	if err != nil {
-		jsonResp := "{\"Error\": \"Failed to get policies.\"}"
-		return nil, errors.New(jsonResp)
-	}
-
-	return policiesAsBytes, nil
-}
+// func getOwners(stub *shim.ChaincodeStub, ownersString string) ([]byte, error) {
+// 	fmt.Println("Function: getOwners (" + ownersString + ")")
+//
+// 	ownersAsBytes, err := stub.GetState(ownersString)
+// 	if err != nil {
+// 		jsonResp := "{\"Error\": \"Failed to get owners.\"}"
+// 		return nil, errors.New(jsonResp)
+// 	}
+//
+// 	return ownersAsBytes, nil
+// }
+//
+// //==============================================================================
+// //==============================================================================
+//
+// func getCows(stub *shim.ChaincodeStub) ([]byte, error) {
+// 	fmt.Println("Function: getCows (" + activeCowsString + ")")
+//
+// 	cowsAsBytes, err := stub.GetState(activeCowsString)
+// 	if err != nil {
+// 		jsonResp := "{\"Error\": \"Failed to get cows.\"}"
+// 		return nil, errors.New(jsonResp)
+// 	}
+//
+// 	return cowsAsBytes, nil
+// }
+//
+// //==============================================================================
+// //==============================================================================
+//
+// func getPolicies(stub *shim.ChaincodeStub) ([]byte, error) {
+// 	fmt.Println("Function: getPolicies (" + policiesString + ")")
+//
+// 	policiesAsBytes, err := stub.GetState(policiesString)
+// 	if err != nil {
+// 		jsonResp := "{\"Error\": \"Failed to get policies.\"}"
+// 		return nil, errors.New(jsonResp)
+// 	}
+//
+// 	return policiesAsBytes, nil
+// }
 
 //==============================================================================
 //==============================================================================
@@ -269,7 +269,7 @@ func getAll(stub *shim.ChaincodeStub, objectString string) ([]byte, error) {
 //==============================================================================
 //==============================================================================
 
-func writePolicies(stub *shim.ChaincodeStub, policiesString string, policies AllPolicies) error {
+func writePolicies(stub *shim.ChaincodeStub, policies AllPolicies) error {
 	fmt.Println("Function: writePolicies")
 
 	policiesAsBytes, err := json.Marshal(policies)
@@ -278,7 +278,7 @@ func writePolicies(stub *shim.ChaincodeStub, policiesString string, policies All
 	}
 	fmt.Println("policies have been converted to bytes")
 
-	err = write(stub, policiesString, policiesAsBytes)
+	err = write(stub, activePoliciesString, policiesAsBytes)
 	if err != nil {
 		return err
 	}
@@ -289,7 +289,7 @@ func writePolicies(stub *shim.ChaincodeStub, policiesString string, policies All
 //==============================================================================
 //==============================================================================
 
-func writeOwners(stub *shim.ChaincodeStub, ownersString string, owners AllOwners) error {
+func writeOwners(stub *shim.ChaincodeStub, owners AllOwners) error {
 	fmt.Println("Function: writeOwners")
 
 	ownersAsBytes, err := json.Marshal(owners)
@@ -298,7 +298,7 @@ func writeOwners(stub *shim.ChaincodeStub, ownersString string, owners AllOwners
 	}
 	fmt.Println("owners have been converted to bytes")
 
-	err = write(stub, ownersString, ownersAsBytes)
+	err = write(stub, activeOwnersString, ownersAsBytes)
 	if err != nil {
 		return err
 	}
@@ -347,7 +347,7 @@ func (t *SimpleChaincode) registerOwner(stub *shim.ChaincodeStub, args []string)
 func addOwner(stub *shim.ChaincodeStub, owner Owner) error {
 	fmt.Println("Function: addOwner")
 
-	ownersAsBytes, err := getOwners(stub, activeOwnersString)
+	ownersAsBytes, err := getAll(stub, activeOwnersString)
 	if err != nil {
 		return err
 	}
@@ -378,14 +378,14 @@ func addOwner(stub *shim.ChaincodeStub, owner Owner) error {
 func addCow(stub *shim.ChaincodeStub, cow Cow) error {
 	fmt.Println("Function: addCow")
 
-	cowsAsBytes, err := getCows(stub)
+	cowsAsBytes, err := getAll(stub, activeCowsString)
 	if err != nil {
 		return err
 	}
 	fmt.Println("all cows retrieved")
 
 	var listOfCows AllCows
-	listOfCows, err = bytesToAllCows(listOfCows)
+	listOfCows, err = bytesToAllCows(cowsAsBytes)
 	if err != nil {
 		return err
 	}
@@ -458,7 +458,7 @@ func createPolicyObject(ID string) Policy {
 
 	var policy Policy
 
-	policy.PolicyID = ID
+	policy.SensorID = ID
 	policy.Premium = 100
 	policy.Value = 5000
 
@@ -483,7 +483,7 @@ func generatePolicy(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
 	//TODO(isaac) add the new policy to the list of current policies
 	// add the policy to the owner
-	policiesAsBytes, err := getPolicies(stub, activePoliciesString)
+	policiesAsBytes, err := getAll(stub, activePoliciesString)
 	if err != nil {
 		return nil, err
 	}
@@ -498,7 +498,7 @@ func generatePolicy(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	policies.Catalog = append(policies.Catalog, newPolicy)
 	fmt.Println("New policy appended to policies. Incomplete policy count: " + strconv.Itoa(len(policies.Catalog)))
 
-	err = writePolicies(stub, activePoliciesString, policies)
+	err = writePolicies(stub, policies)
 	if err != nil {
 		return nil, err
 	}
@@ -533,8 +533,8 @@ func getPolicyIndexByID(policies []Policy, sensorID string) (int, error) {
 
 	var i int
 	i = 0
-	for i < len(cows) {
-		if cows[i].SensorID == sensorID {
+	for i < len(policies) {
+		if policies[i].SensorID == sensorID {
 			return i, nil
 		}
 		i = i + 1
@@ -546,42 +546,26 @@ func getPolicyIndexByID(policies []Policy, sensorID string) (int, error) {
 //==============================================================================
 //==============================================================================
 
-func sensorTriggered(sensorID string) (int, error) {
+func sensorTriggered(stub *shim.ChaincodeStub, args []string) error {
 	fmt.Println("Function: sensorTriggered")
 
-	var cows AllCows
+	sensorID := args[0]
 
-	cowsAsBytes, err := getCows()
-	cows, err = bytesToAllCows(cowsAsBytes)
-	cowDies, err := cowDeath(cows.Catalog, sensorID)
-
-	//TODO getstate of active cow string
-	// I will get it in bytes form
-
-	return cowDies
+	return cowDeath(stub, sensorID)
 }
 
 //==============================================================================
 //==============================================================================
 
-func cowDeath(stub *shim.ChaincodeStub, args []string) error {
+func cowDeath(stub *shim.ChaincodeStub, sensorID string) error {
 	//TODO needs to call pay out
 
-	sensorID := args[0]
+	var cows AllCows
+	cowsAsBytes, err := getAll(stub, activeCowsString)
+	cows, err = bytesToAllCows(cowsAsBytes)
+
 	fmt.Println("Function: cowDeath")
-	index, err := getCowIndexBySensor(sensorID)
-	if err != nil {
-		return err
-	}
-
-	var policies AllPolicies
-	policiesAsBytes, err := getPolicies()
-	policies, err = bytesToAllPolicies(policiesAsBytes)
-	if err != nil {
-		return err
-	}
-
-	payOut, err := payOut(policies, sensorID)
+	index, err := getCowIndexBySensor(cows.Catalog, sensorID)
 	if err != nil {
 		return err
 	}
@@ -589,7 +573,30 @@ func cowDeath(stub *shim.ChaincodeStub, args []string) error {
 	copy(cows.Catalog[:index], cows.Catalog[index + 1:])
 	cows.Catalog = cows.Catalog[:len(cows.Catalog) - 1]
 
-	writeCows(cows)
+	var policies AllPolicies
+	policiesAsBytes, err := getAll(stub, activePoliciesString)
+	policies, err = bytesToAllPolicies(policiesAsBytes)
+	if err != nil {
+		return err
+	}
+
+	index, err = getPolicyIndexByID(policies.Catalog, sensorID)
+	if err != nil {
+		return err
+	}
+
+	copy(policies.Catalog[:index], policies.Catalog[index + 1:])
+	policies.Catalog = policies.Catalog[:len(policies.Catalog) - 1]
+
+	payOut, err := payOut(policies.Catalog, sensorID)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(payOut)
+
+	writeCows(stub, cows)
+	writePolicies(stub, policies)
 
 	return nil
 }
@@ -597,16 +604,16 @@ func cowDeath(stub *shim.ChaincodeStub, args []string) error {
 //==============================================================================
 //==============================================================================
 
-func payOut(policies []Policy, policyID string) (int, error) {
+func payOut(policies []Policy, sensorID string) (int, error) {
 
 	var i int
 	i = 0
 	for i < len(policies) {
-		if policies[i].policyID == policyID {
+		if policies[i].SensorID == sensorID {
 			return policies[i].Value, nil
 		}
 		i = i + 1
 	}
 
-	return 0, errors.New("No policy found with this policy ID: " + policyID)
+	return 0, errors.New("No policy found with this policy ID: " + sensorID)
 }
