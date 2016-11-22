@@ -76,7 +76,7 @@ func makeHash(args []string) string {
 //==============================================================================
 //==============================================================================
 
-func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("Method: SimpleChaincode.Init")
 
 	// Initialize the catalogs for both pending and active policies
@@ -135,7 +135,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 //==============================================================================
 //==============================================================================
 
-func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("Method: SimpleChaincode.Invoke; received: " + function)
 
 	if function == "init" {
@@ -153,7 +153,7 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 //==============================================================================
 //==============================================================================
 
-func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("Method: SimpleChaincode.Query; received: " + function)
 
 	if function == "getActivePolicies" {
@@ -174,7 +174,7 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 //==============================================================================
 //==============================================================================
 
-func write(stub *shim.ChaincodeStub, name string, value []byte) error {
+func write(stub shim.ChaincodeStubInterface, name string, value []byte) error {
 	fmt.Println("Function: write")
 
 	err := stub.PutState(name, value)
@@ -187,7 +187,7 @@ func write(stub *shim.ChaincodeStub, name string, value []byte) error {
 //==============================================================================
 //==============================================================================
 
-// func getOwners(stub *shim.ChaincodeStub, ownersString string) ([]byte, error) {
+// func getOwners(stub shim.ChaincodeStubInterface, ownersString string) ([]byte, error) {
 // 	fmt.Println("Function: getOwners (" + ownersString + ")")
 //
 // 	ownersAsBytes, err := stub.GetState(ownersString)
@@ -232,7 +232,7 @@ func write(stub *shim.ChaincodeStub, name string, value []byte) error {
 //==============================================================================
 //==============================================================================
 
-func getAll(stub *shim.ChaincodeStub, objectString string) ([]byte, error) {
+func getAll(stub shim.ChaincodeStubInterface, objectString string) ([]byte, error) {
 	fmt.Println("Function: getAll (" + objectString + ")")
 
 	objectsAsBytes, err := stub.GetState(objectString)
@@ -247,7 +247,7 @@ func getAll(stub *shim.ChaincodeStub, objectString string) ([]byte, error) {
 //==============================================================================
 //==============================================================================
 
-// func getPolicyOwner(stub *shim.ChaincodeStub, args []string) (int, error) {
+// func getPolicyOwner(stub shim.ChaincodeStubInterface, args []string) (int, error) {
 // 	fmt.Println("Function: getPolicyOwner")
 //
 // 	policyID := args[0]
@@ -269,7 +269,7 @@ func getAll(stub *shim.ChaincodeStub, objectString string) ([]byte, error) {
 //==============================================================================
 //==============================================================================
 
-func writePolicies(stub *shim.ChaincodeStub, policies AllPolicies) error {
+func writePolicies(stub shim.ChaincodeStubInterface, policies AllPolicies) error {
 	fmt.Println("Function: writePolicies")
 
 	policiesAsBytes, err := json.Marshal(policies)
@@ -289,7 +289,7 @@ func writePolicies(stub *shim.ChaincodeStub, policies AllPolicies) error {
 //==============================================================================
 //==============================================================================
 
-func writeOwners(stub *shim.ChaincodeStub, owners AllOwners) error {
+func writeOwners(stub shim.ChaincodeStubInterface, owners AllOwners) error {
 	fmt.Println("Function: writeOwners")
 
 	ownersAsBytes, err := json.Marshal(owners)
@@ -309,7 +309,7 @@ func writeOwners(stub *shim.ChaincodeStub, owners AllOwners) error {
 //==============================================================================
 //==============================================================================
 
-func writeCows(stub *shim.ChaincodeStub, cows AllCows) error {
+func writeCows(stub shim.ChaincodeStubInterface, cows AllCows) error {
 	fmt.Println("Function: writeCows")
 
 	cowsAsBytes, err := json.Marshal(cows)
@@ -329,7 +329,7 @@ func writeCows(stub *shim.ChaincodeStub, cows AllCows) error {
 //==============================================================================
 //==============================================================================
 
-func (t *SimpleChaincode) registerOwner(stub *shim.ChaincodeStub, args []string) ([]byte, error){
+func (t *SimpleChaincode) registerOwner(stub shim.ChaincodeStubInterface, args []string) ([]byte, error){
 	//TODO(isaac) assign the owner a unique ID #
 	//TODO(isaac) make an owner object with this ID #
 	if len(args) != 2 {
@@ -344,7 +344,7 @@ func (t *SimpleChaincode) registerOwner(stub *shim.ChaincodeStub, args []string)
 //==============================================================================
 //==============================================================================
 
-func addOwner(stub *shim.ChaincodeStub, owner Owner) error {
+func addOwner(stub shim.ChaincodeStubInterface, owner Owner) error {
 	fmt.Println("Function: addOwner")
 
 	ownersAsBytes, err := getAll(stub, activeOwnersString)
@@ -375,7 +375,7 @@ func addOwner(stub *shim.ChaincodeStub, owner Owner) error {
 //==============================================================================
 //==============================================================================
 
-func addCow(stub *shim.ChaincodeStub, cow Cow) error {
+func addCow(stub shim.ChaincodeStubInterface, cow Cow) error {
 	fmt.Println("Function: addCow")
 
 	cowsAsBytes, err := getAll(stub, activeCowsString)
@@ -469,7 +469,7 @@ func createPolicyObject(ID string) Policy {
 //==============================================================================
 //==============================================================================
 
-func generatePolicy(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+func generatePolicy(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
 	//TODO(isaac) exoecting one argument (cowID), might take ownerID
 	if len(args) < 1 {
@@ -546,7 +546,7 @@ func getPolicyIndexByID(policies []Policy, sensorID string) (int, error) {
 //==============================================================================
 //==============================================================================
 
-func sensorTriggered(stub *shim.ChaincodeStub, args []string) error {
+func sensorTriggered(stub shim.ChaincodeStubInterface, args []string) error {
 	fmt.Println("Function: sensorTriggered")
 
 	sensorID := args[0]
@@ -557,7 +557,7 @@ func sensorTriggered(stub *shim.ChaincodeStub, args []string) error {
 //==============================================================================
 //==============================================================================
 
-func cowDeath(stub *shim.ChaincodeStub, sensorID string) error {
+func cowDeath(stub shim.ChaincodeStubInterface, sensorID string) error {
 	//TODO needs to call pay out
 
 	var cows AllCows
